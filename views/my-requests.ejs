@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Requests</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <div class="card stack-lg">
+      <div class="page-header">
+        <h2 class="page-heading">My Requests</h2>
+      </div>
+
+      <% if (typeof issuanceMessage !== "undefined" && issuanceMessage) { %>
+        <div class="message-box <%= issuanceMessageType === 'success' ? 'success-box' : 'info-box' %>">
+          <%= issuanceMessage %>
+        </div>
+      <% } %>
+
+      <% if (typeof issuanceError !== "undefined" && issuanceError) { %>
+        <div class="message-box error-box">
+          <%= issuanceError %>
+        </div>
+      <% } %>
+
+      <% if (requests.length === 0) { %>
+        <div class="message-box info-box empty">You have not submitted any certificate requests yet.</div>
+      <% } else { %>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Common Name</th>
+                <th>Organization</th>
+                <th>OU</th>
+                <th>Country</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% requests.forEach(request => { %>
+                <tr>
+                  <td><%= request.commonName %></td>
+                  <td><%= request.organization %></td>
+                  <td><%= request.organizationalUnit %></td>
+                  <td><%= request.country %></td>
+                  <td><%= request.email %></td>
+                  <td class="cell-center">
+                    <div class="status-stack">
+                      <span class="badge <%= request.status.toLowerCase() %>">
+                        <%= request.status %>
+                      </span>
+                      <% if (request.status === "REJECTED" && request.rejectionReason && request.rejectionReason !== "No reason provided") { %>
+                        <div class="status-reason">
+                          <%= request.rejectionReason %>
+                        </div>
+                      <% } %>
+                    </div>
+                  </td>
+                  <td class="cell-start">
+                    <div class="button-row">
+                      <% if (request.status === "APPROVED") { %>
+                        <form action="/my-requests/check-issued/<%= request._id %>" method="POST" class="inline-form">
+                          <button type="submit" class="action-btn check-btn">Check Issuance</button>
+                        </form>
+                      <% } %>
+
+                      <% if (request.status === "ISSUED") { %>
+                        <a href="/certificates" class="action-btn view-btn">View Certificate</a>
+                      <% } %>
+                    </div>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+
+      <a href="/dashboard" class="back-link">Back</a>
+    </div>
+  </div>
+</body>
+</html>

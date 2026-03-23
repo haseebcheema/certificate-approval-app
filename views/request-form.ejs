@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Request Certificate Form</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="page-shell narrow">
+    <div class="card">
+      <div class="page-header centered">
+        <h2 class="page-heading">Request Certificate</h2>
+      </div>
+
+      <% if (error) { %>
+        <div class="message-box error-box">
+          <%= error %>
+        </div>
+      <% } %>
+
+      <% if (success) { %>
+        <div class="message-box success-box">
+          <%= success %>
+        </div>
+      <% } %>
+
+      <form action="/request" method="POST">
+        <div class="form-grid">
+          <div>
+            <label for="commonName">Common Name</label>
+            <input id="commonName" type="text" name="commonName" placeholder="e.g. test.example.com" required />
+          </div>
+
+          <div>
+            <label for="organization">Organization</label>
+            <input id="organization" type="text" name="organization" required />
+          </div>
+
+          <div>
+            <label for="organizationalUnit">Organizational Unit</label>
+            <input id="organizationalUnit" type="text" name="organizationalUnit" required />
+          </div>
+
+          <div>
+            <label for="country">Country</label>
+            <input id="country" type="text" name="country" maxlength="2" required />
+          </div>
+
+          <div>
+            <label for="email">Email</label>
+            <input id="email" type="email" name="email" required />
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit">Submit</button>
+          <a href="/dashboard" class="back-link">Back</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

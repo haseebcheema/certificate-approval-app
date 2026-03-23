@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="page-shell medium">
+    <div class="card stack-lg">
+      <div class="page-header">
+        <h1 class="page-title"><%= user.username %></h1>
+        <div class="role">Role: <strong><%= user.role %></strong></div>
+      </div>
+
+      <div class="menu">
+        <% if (user.role === "requester") { %>
+          <a href="/request">Request Certificate</a>
+          <a href="/my-requests">My Requests</a>
+          <a href="/certificates">My Certificates</a>
+        <% } %>
+
+        <% if (user.role === "approver") { %>
+          <a href="/pending">Pending Requests</a>
+          <a href="/approved">Approved Requests</a>
+        <% } %>
+      </div>
+
+      <form action="/logout" method="POST" class="inline-form">
+        <button type="submit" class="logout-btn">Logout</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

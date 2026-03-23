@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Certificates</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <div class="card stack-lg">
+      <div class="page-header">
+        <h2 class="page-heading">My Certificates</h2>
+      </div>
+
+      <% if (certificates.length === 0) { %>
+        <div class="message-box info-box empty">No certificates available yet.</div>
+      <% } else { %>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Common Name</th>
+                <th>Certificate</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% certificates.forEach(certificate => { %>
+                <tr>
+                  <td><%= certificate.commonName %></td>
+                  <td class="cell-start">
+                    <a href="/certificates/<%= certificate._id %>/download" class="download-btn">
+                      Download
+                    </a>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+
+      <a href="/dashboard" class="back-link">Back to Dashboard</a>
+    </div>
+  </div>
+</body>
+</html>

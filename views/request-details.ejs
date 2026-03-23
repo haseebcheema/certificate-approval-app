@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Request Details</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="page-shell medium">
+    <div class="card stack-lg">
+      <div class="page-header centered">
+        <h2 class="page-heading">Request Details</h2>
+      </div>
+
+      <% if (issuanceMessage) { %>
+        <div class="message-box success-box">
+          <%= issuanceMessage %>
+        </div>
+      <% } %>
+
+      <% if (issuanceError) { %>
+        <div class="message-box error-box">
+          <%= issuanceError %>
+        </div>
+      <% } %>
+
+      <div class="details-list">
+        <div class="row">
+          <span class="label">Requester</span>
+          <span class="value"><%= request.requesterUsername %></span>
+        </div>
+
+        <div class="row">
+          <span class="label">Common Name</span>
+          <span class="value"><%= request.commonName %></span>
+        </div>
+
+        <div class="row">
+          <span class="label">Organization</span>
+          <span class="value"><%= request.organization %></span>
+        </div>
+
+        <div class="row">
+          <span class="label">Organizational Unit</span>
+          <span class="value"><%= request.organizationalUnit %></span>
+        </div>
+
+        <div class="row">
+          <span class="label">Country</span>
+          <span class="value"><%= request.country %></span>
+        </div>
+
+        <div class="row">
+          <span class="label">Email</span>
+          <span class="value"><%= request.email %></span>
+        </div>
+
+        <div class="row">
+          <span class="label">OpenXPKI Request ID</span>
+          <span class="value"><%= request.openxpkiRequestId || "Not available yet" %></span>
+        </div>
+
+        <div class="row">
+          <span class="label">Status</span>
+          <span class="value status <%= request.status === 'PENDING' ? 'pending' : '' %> <%= request.status === 'APPROVED' ? 'approved' : '' %> <%= request.status === 'ISSUED' ? 'issued' : '' %> <%= request.status === 'REJECTED' ? 'rejected' : '' %> <%= request.status === 'OPENXPKI_FAILED' ? 'failed' : '' %>">
+            <%= request.status %>
+          </span>
+        </div>
+
+        <div class="row">
+          <span class="label">Submitted At</span>
+          <span class="value"><%= new Date(request.createdAt).toLocaleString() %></span>
+        </div>
+
+        <% if (request.approvedAt) { %>
+          <div class="row">
+            <span class="label">Approved At</span>
+            <span class="value"><%= new Date(request.approvedAt).toLocaleString() %></span>
+          </div>
+        <% } %>
+      </div>
+
+      <% if (request.rejectionReason && request.rejectionReason !== "No reason provided") { %>
+        <div class="message-box reason-box">
+          <strong>Rejection Reason:</strong><br />
+          <%= request.rejectionReason %>
+        </div>
+      <% } %>
+
+      <% if (request.openxpkiError) { %>
+        <div class="message-box error-box">
+          <strong>OpenXPKI Error:</strong><br />
+          <%= request.openxpkiError %>
+        </div>
+      <% } %>
+
+      <div class="actions request-actions">
+        <% if (request.status === "PENDING") { %>
+          <form action="/approve/<%= request._id %>" method="POST" class="inline-form">
+            <button type="submit" class="approve-btn">Approve</button>
+          </form>
+
+          <form action="/reject/<%= request._id %>" method="POST" class="inline-form reject-form">
+            <button type="submit" class="reject-btn">Reject</button>
+            <label for="rejection-reason-<%= request._id %>">Rejection reason</label>
+            <textarea
+              id="rejection-reason-<%= request._id %>"
+              name="rejectionReason"
+              rows="2"
+            ></textarea>
+          </form>
+        <% } %>
+
+        <a href="<%= backUrl %>" class="back-link">Back</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
