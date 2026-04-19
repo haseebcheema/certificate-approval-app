@@ -1,3 +1,6 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   CSS Custom Properties
+───────────────────────────────────────────────────────────────────────────── */
 :root {
   --bg: #f4f6f8;
   --surface: #ffffff;
@@ -19,9 +22,11 @@
   --warning-soft: #fff8e1;
   --warning-border: #ffe08a;
   --shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
-  --action-button-width: 128px;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   Reset & Base
+───────────────────────────────────────────────────────────────────────────── */
 * {
   box-sizing: border-box;
 }
@@ -41,6 +46,9 @@ a {
   color: inherit;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   Layout
+───────────────────────────────────────────────────────────────────────────── */
 .page-shell {
   width: min(1120px, 100%);
   margin: 0 auto;
@@ -56,6 +64,7 @@ a {
 
 .pending-page-shell {
   width: min(1400px, 100%);
+  margin: 0 auto;
 }
 
 .card {
@@ -66,7 +75,23 @@ a {
   padding: 32px;
 }
 
+.stack-lg>*+* {
+  margin-top: 24px;
+}
+
+.centered {
+  text-align: center;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Page Header
+───────────────────────────────────────────────────────────────────────────── */
 .page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 24px;
 }
 
@@ -82,37 +107,9 @@ a {
   font-size: 24px;
 }
 
-.role,
-.empty {
-  color: var(--text-muted);
-}
-
-.empty {
-  margin: 0;
-}
-
-.centered {
-  text-align: center;
-}
-
-.stack-lg > * + * {
-  margin-top: 24px;
-}
-
-.menu,
-.actions,
-.button-row,
-.form-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-}
-
-.menu {
-  gap: 14px;
-}
-
+/* ─────────────────────────────────────────────────────────────────────────────
+   Buttons — base styles
+───────────────────────────────────────────────────────────────────────────── */
 .btn,
 button,
 .menu a,
@@ -136,8 +133,7 @@ button,
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
-  transition: background-color 0.18s ease, border-color 0.18s ease,
-    transform 0.18s ease;
+  transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
 }
 
 .btn:hover,
@@ -153,17 +149,13 @@ button:hover,
   transform: translateY(-1px);
 }
 
+/* Primary — default button + menu links */
 button,
 .menu a,
 .check-btn {
   background: var(--primary);
   border-color: var(--primary);
   color: #fff;
-}
-
-.menu a {
-  min-width: 170px;
-  padding-inline: 20px;
 }
 
 button:hover,
@@ -173,6 +165,12 @@ button:hover,
   border-color: var(--primary-hover);
 }
 
+.menu a {
+  min-width: 170px;
+  padding-inline: 20px;
+}
+
+/* Secondary — back / view / details */
 .back-link,
 .back-btn,
 .view-btn,
@@ -190,6 +188,7 @@ button:hover,
   border-color: var(--secondary-hover);
 }
 
+/* Success — approve / download */
 .approve-btn,
 .download-btn {
   background: var(--success);
@@ -203,6 +202,7 @@ button:hover,
   border-color: #276749;
 }
 
+/* Danger — reject / logout */
 .reject-btn,
 .logout-btn {
   background: var(--danger);
@@ -216,50 +216,184 @@ button:hover,
   border-color: var(--danger-hover);
 }
 
-.menu > *,
-.form-actions > *,
-.actions > * {
-  margin-top: 0;
+/* Warning — retry */
+.retry-btn {
+  background: #f59e0b;
+  border-color: #f59e0b;
+  color: #fff;
 }
 
-.menu + .inline-form,
-.table-wrap + .back-link,
-.table-wrap + .back-btn,
-.form-grid + .form-actions,
-.details-list + .actions {
-  margin-top: 24px;
+.retry-btn:hover {
+  background: #d97706;
+  border-color: #d97706;
 }
 
-.page-header + .inline-form {
-  margin-top: 24px;
+/* ─────────────────────────────────────────────────────────────────────────────
+   Button groups
+───────────────────────────────────────────────────────────────────────────── */
+.menu,
+.actions,
+.button-row,
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
 }
 
-.menu + .inline-form {
-  display: inline-block;
-  margin-top: 24px;
+.menu {
+  gap: 14px;
 }
 
 .button-row {
   gap: 10px;
 }
 
-.button-row > *,
-.button-row .inline-form {
+.menu>*,
+.form-actions>*,
+.actions>*,
+.button-row>* {
   margin: 0;
 }
 
-.button-row .btn,
-.button-row button,
-.button-row .action-btn,
-.button-row .download-btn,
-.button-row .details-btn,
-.button-row .approve-btn,
-.button-row .reject-btn,
-.button-row .view-btn,
-.button-row .menu a {
-  margin: 0;
+/* Spacing helpers */
+.menu+.inline-form,
+.table-wrap+.back-link,
+.table-wrap+.back-btn,
+.form-grid+.form-actions,
+.details-list+.actions {
+  margin-top: 24px;
 }
 
+.page-header+.inline-form,
+.menu+.inline-form {
+  margin-top: 24px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Action stacks (vertical button lists in detail views)
+───────────────────────────────────────────────────────────────────────────── */
+.action-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.request-actions {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.action-stack>*,
+.action-stack .inline-form,
+.request-actions>*,
+.request-actions .inline-form {
+  margin: 0;
+  width: 128px;
+}
+
+.action-stack .btn,
+.action-stack button,
+.action-stack .details-btn,
+.action-stack .approve-btn,
+.action-stack .reject-btn,
+.action-stack .download-btn,
+.action-stack .retry-btn,
+.action-stack .view-btn,
+.action-stack .back-link,
+.request-actions .btn,
+.request-actions button,
+.request-actions .details-btn,
+.request-actions .approve-btn,
+.request-actions .reject-btn,
+.request-actions .download-btn,
+.request-actions .retry-btn,
+.request-actions .view-btn,
+.request-actions .back-link {
+  width: 128px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Approver table — action column
+   Textarea + buttons are fully contained, aligned, and proportional
+───────────────────────────────────────────────────────────────────────────── */
+.actions-cell {
+  width: 220px;
+  min-width: 220px;
+  padding: 10px 8px;
+  vertical-align: top;
+}
+
+.actions-cell a.action-row-btn,
+.actions-cell form {
+  display: block;
+  width: 100%;
+  margin-bottom: 5px;
+}
+
+.actions-cell a.action-row-btn,
+.actions-cell button.action-row-btn {
+  display: block;
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  border-radius: 6px;
+  cursor: pointer;
+  box-sizing: border-box;
+  text-decoration: none;
+  min-height: 34px;
+}
+
+/* Reject form — compact textarea above the Reject button */
+.reject-inline-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  margin-bottom: 0 !important;
+}
+
+.reject-inline-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.reject-inline-textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  resize: vertical;
+  box-sizing: border-box;
+  line-height: 1.5;
+  min-height: 64px;
+  max-height: 120px;
+}
+
+.reject-inline-textarea:focus {
+  outline: none;
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
+}
+
+.reject-inline-form .reject-btn.action-row-btn {
+  width: 100%;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Forms
+───────────────────────────────────────────────────────────────────────────── */
 .form-grid {
   display: grid;
   gap: 18px;
@@ -296,6 +430,54 @@ textarea:focus {
   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.12);
 }
 
+.inline-form {
+  display: inline;
+  margin: 0;
+}
+
+/* Reject form in request-details (not the table) */
+.reject-form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  width: 128px;
+}
+
+.reject-form label {
+  margin-bottom: 0;
+  font-size: 13px;
+}
+
+.reject-form textarea {
+  min-height: 64px;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Reject group (detail view) */
+.reject-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reject-group label {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.reject-group textarea {
+  font-size: 13px;
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  resize: vertical;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Message boxes
+───────────────────────────────────────────────────────────────────────────── */
 .message-box,
 .error {
   margin-bottom: 20px;
@@ -318,29 +500,6 @@ textarea:focus {
   color: #842029;
 }
 
-.reason-box {
-  background: var(--warning-soft);
-  border-color: var(--warning-border);
-  color: #7a5a00;
-}
-
-.status-stack {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  max-width: 220px;
-}
-
-.status-reason {
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1.4;
-  color: #7a5a00;
-  text-align: center;
-  width: 100%;
-}
-
 .success-box {
   background: var(--success-soft);
   border-color: var(--success-border);
@@ -353,6 +512,48 @@ textarea:focus {
   color: var(--text-muted);
 }
 
+.reason-box {
+  background: var(--warning-soft);
+  border-color: var(--warning-border);
+  color: #7a5a00;
+}
+
+/* FAILED state banner */
+.failed-banner {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Fallback / warning banner */
+.warning-box {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Error detail (smaller font for raw error strings) */
+.error-detail {
+  font-size: 13px;
+}
+
+/* CSR generation status box */
+.csr-status-box {
+  font-size: 14px;
+  transition: opacity 0.2s ease;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Tables
+───────────────────────────────────────────────────────────────────────────── */
 .table-wrap {
   overflow-x: auto;
   border: 1px solid var(--border);
@@ -360,39 +561,17 @@ textarea:focus {
 }
 
 .pending-table-wrap {
-  overflow-x: visible;
-}
-
-.pending-table {
-  table-layout: fixed;
-}
-
-.pending-table th,
-.pending-table td {
-  padding: 12px 12px;
-  font-size: 13px;
-  word-break: break-word;
-}
-
-.pending-table .action-stack {
-  min-width: 0;
-}
-
-.pending-table .action-stack .btn,
-.pending-table .action-stack button,
-.pending-table .action-stack .action-btn,
-.pending-table .action-stack .download-btn,
-.pending-table .action-stack .details-btn,
-.pending-table .action-stack .approve-btn,
-.pending-table .action-stack .reject-btn,
-.pending-table .action-stack .view-btn {
-  padding: 10px 12px;
-  font-size: 13px;
+  overflow-x: auto;
+  border-radius: 12px;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
+}
+
+.pending-table {
+  table-layout: auto;
 }
 
 th,
@@ -401,6 +580,13 @@ td {
   border-bottom: 1px solid var(--border);
   text-align: left;
   vertical-align: middle;
+}
+
+.pending-table th,
+.pending-table td {
+  padding: 11px 10px;
+  font-size: 13px;
+  word-break: break-word;
 }
 
 th {
@@ -414,6 +600,26 @@ tbody tr:last-child td {
   border-bottom: none;
 }
 
+.table-top td {
+  vertical-align: top;
+}
+
+.cell-center {
+  text-align: center;
+}
+
+.cell-center .button-row {
+  justify-content: center;
+}
+
+.cell-start {
+  text-align: left;
+  vertical-align: top;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Badges & Status labels
+───────────────────────────────────────────────────────────────────────────── */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -467,72 +673,31 @@ tbody tr:last-child td {
   color: #b42318;
 }
 
-.cell-center {
-  text-align: center;
+.badge.fallback_issued,
+.status.fallback {
+  background: #fef3c7;
+  color: #92400e;
 }
 
-.cell-center .button-row {
-  justify-content: center;
+/* Self-signed pill next to status in detail view */
+.fallback-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 7px;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.cell-start {
-  text-align: left;
-  vertical-align: top;
-}
-
-.cell-start .button-row {
-  justify-content: flex-start;
-}
-
-.action-stack {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.request-actions {
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.action-stack > *,
-.action-stack .inline-form,
-.request-actions > *,
-.request-actions .inline-form {
-  margin: 0;
-}
-
-.action-stack .inline-form,
-.request-actions .inline-form,
-.request-actions > .back-link {
-  width: var(--action-button-width);
-}
-
-.action-stack .btn,
-.action-stack button,
-.action-stack .action-btn,
-.action-stack .download-btn,
-.action-stack .details-btn,
-.action-stack .approve-btn,
-.action-stack .reject-btn,
-.action-stack .view-btn,
-.request-actions .btn,
-.request-actions button,
-.request-actions .action-btn,
-.request-actions .download-btn,
-.request-actions .details-btn,
-.request-actions .approve-btn,
-.request-actions .reject-btn,
-.request-actions .view-btn,
-.request-actions .back-link {
-  width: var(--action-button-width);
-}
-
-.table-top td {
-  vertical-align: top;
-}
-
+/* ─────────────────────────────────────────────────────────────────────────────
+   Detail view rows
+───────────────────────────────────────────────────────────────────────────── */
 .details-list {
   display: grid;
 }
@@ -564,30 +729,93 @@ tbody tr:last-child td {
   word-break: break-word;
 }
 
-.inline-form {
-  display: inline;
-  margin: 0;
+/* ─────────────────────────────────────────────────────────────────────────────
+   Failed requests table
+───────────────────────────────────────────────────────────────────────────── */
+.failed-row {
+  background: #fff5f5;
 }
 
-.reject-form {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
-  width: var(--action-button-width);
+.failed-row:hover {
+  background: #fee2e2;
 }
 
-.reject-form label {
-  margin-bottom: 0;
+.error-cell {
+  max-width: 280px;
+}
+
+.error-snippet {
+  display: block;
+  color: #b91c1c;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 260px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Misc helpers
+───────────────────────────────────────────────────────────────────────────── */
+.mono {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.muted {
+  color: #9ca3af;
   font-size: 13px;
 }
 
-.reject-form textarea {
-  min-height: 64px;
-  width: 100%;
-  max-width: 100%;
+.retry-count {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 12px;
+  opacity: 0.8;
 }
 
+.role,
+.empty {
+  color: var(--text-muted);
+}
+
+.empty {
+  margin: 0;
+}
+
+.status-stack {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 220px;
+}
+
+.status-reason {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #7a5a00;
+  text-align: center;
+  width: 100%;
+}
+
+/* Failed requests link in pending page header */
+.failed-link {
+  font-size: 13px;
+  color: #b91c1c;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.failed-link:hover {
+  text-decoration: underline;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Login page
+───────────────────────────────────────────────────────────────────────────── */
 .login-page {
   display: flex;
   align-items: center;
@@ -604,6 +832,9 @@ tbody tr:last-child td {
   width: 100%;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   Responsive
+───────────────────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   body {
     padding: 20px 14px;
@@ -637,10 +868,15 @@ tbody tr:last-child td {
     align-items: stretch;
   }
 
-  .menu > *,
-  .actions > *,
-  .button-row > *,
-  .form-actions > * {
+  .menu>*,
+  .actions>*,
+  .button-row>*,
+  .form-actions>* {
     width: 100%;
+  }
+
+  .actions-cell {
+    width: 100%;
+    min-width: 0;
   }
 }

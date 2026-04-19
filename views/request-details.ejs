@@ -9,23 +9,30 @@
 <body>
   <div class="page-shell medium">
     <div class="card stack-lg">
+
       <div class="page-header centered">
         <h2 class="page-heading">Request Details</h2>
       </div>
 
+      <%# Success message — merged with fallback info if applicable %>
       <% if (issuanceMessage) { %>
         <div class="message-box success-box">
           <%= issuanceMessage %>
         </div>
       <% } %>
 
-      <% if (issuanceError) { %>
-        <div class="message-box error-box">
-          <%= issuanceError %>
+      <%# FAILED state banner — only when no issuanceMessage %>
+      <% if (!issuanceMessage && request.status === "FAILED") { %>
+        <div class="message-box failed-banner">
+          <strong>This request could not be completed.</strong><br />
+          The certificate authority was unreachable.
+          <strong>Retry</strong> once the certificate authority is back online.
         </div>
       <% } %>
 
+      <%# Detail rows %>
       <div class="details-list">
+
         <div class="row">
           <span class="label">Requester</span>
           <span class="value"><%= request.requesterUsername %></span>
@@ -57,14 +64,19 @@
         </div>
 
         <div class="row">
-          <span class="label">OpenXPKI Request ID</span>
-          <span class="value"><%= request.openxpkiRequestId || "Not available yet" %></span>
-        </div>
-
-        <div class="row">
           <span class="label">Status</span>
-          <span class="value status <%= request.status === 'PENDING' ? 'pending' : '' %> <%= request.status === 'APPROVED' ? 'approved' : '' %> <%= request.status === 'ISSUED' ? 'issued' : '' %> <%= request.status === 'REJECTED' ? 'rejected' : '' %> <%= request.status === 'OPENXPKI_FAILED' ? 'failed' : '' %>">
+          <span class="value status
+            <%= request.status === 'PENDING'         ? 'pending'  : '' %>
+            <%= request.status === 'APPROVED'        ? 'approved' : '' %>
+            <%= request.status === 'ISSUED'          ? 'issued'   : '' %>
+            <%= request.status === 'FALLBACK_ISSUED' ? 'issued'   : '' %>
+            <%= request.status === 'REJECTED'        ? 'rejected' : '' %>
+            <%= request.status === 'FAILED'          ? 'failed'   : '' %>
+          ">
             <%= request.status %>
+            <% if (request.isFallbackCert) { %>
+              <span class="fallback-badge">self-signed</span>
+            <% } %>
           </span>
         </div>
 
@@ -75,45 +87,60 @@
 
         <% if (request.approvedAt) { %>
           <div class="row">
-            <span class="label">Approved At</span>
+            <span class="label">Actioned At</span>
             <span class="value"><%= new Date(request.approvedAt).toLocaleString() %></span>
           </div>
         <% } %>
+
       </div>
 
-      <% if (request.rejectionReason && request.rejectionReason !== "No reason provided") { %>
+      <%# Rejection reason %>
+      <% if (request.status === "REJECTED" && request.rejectionReason) { %>
         <div class="message-box reason-box">
-          <strong>Rejection Reason:</strong><br />
-          <%= request.rejectionReason %>
+          <strong>Reason:</strong> <%= request.rejectionReason %>
         </div>
       <% } %>
 
-      <% if (request.openxpkiError) { %>
+      <%# Error message %>
+      <% if (issuanceError) { %>
         <div class="message-box error-box">
-          <strong>OpenXPKI Error:</strong><br />
-          <%= request.openxpkiError %>
+          <%= issuanceError %>
         </div>
       <% } %>
 
+      <%# Action buttons %>
       <div class="actions request-actions">
+
+        <%# Approve + Reject — only for PENDING %>
         <% if (request.status === "PENDING") { %>
           <form action="/approve/<%= request._id %>" method="POST" class="inline-form">
             <button type="submit" class="approve-btn">Approve</button>
           </form>
 
           <form action="/reject/<%= request._id %>" method="POST" class="inline-form reject-form">
-            <button type="submit" class="reject-btn">Reject</button>
-            <label for="rejection-reason-<%= request._id %>">Rejection reason</label>
-            <textarea
-              id="rejection-reason-<%= request._id %>"
-              name="rejectionReason"
-              rows="2"
-            ></textarea>
+            <div class="reject-group">
+              <label for="rejection-reason-<%= request._id %>">Rejection reason (optional)</label>
+              <textarea
+                id="rejection-reason-<%= request._id %>"
+                name="rejectionReason"
+                rows="2"
+                placeholder="Enter a reason..."
+              ></textarea>
+              <button type="submit" class="reject-btn">Reject</button>
+            </div>
+          </form>
+        <% } %>
+
+        <%# Retry — only for FAILED %>
+        <% if (request.status === "FAILED") { %>
+          <form action="/retry/<%= request._id %>" method="POST" class="inline-form">
+            <button type="submit" class="retry-btn">Retry</button>
           </form>
         <% } %>
 
         <a href="<%= backUrl %>" class="back-link">Back</a>
       </div>
+
     </div>
   </div>
 </body>

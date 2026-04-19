@@ -54,6 +54,62 @@ const generateCsr = async ({
   }
 };
 
+// Generates a self-signed certificate as a fallback when OpenXPKI is unavailable.
+const generateSelfSignedCert = async ({
+  commonName,
+  organization,
+  organizationalUnit,
+  country,
+  email,
+  csrPem,
+  privateKeyPem,
+  validityDays = 365,
+}) => {
+  const tempId = crypto.randomBytes(8).toString("hex");
+  const tempDir = os.tmpdir();
+
+  const keyPath = path.join(tempDir, `fallback-key-${tempId}.pem`);
+  const csrPath = path.join(tempDir, `fallback-csr-${tempId}.pem`);
+  const certPath = path.join(tempDir, `fallback-cert-${tempId}.pem`);
+
+  try {
+    await Promise.all([
+      fs.writeFile(keyPath, privateKeyPem, "utf8"),
+      fs.writeFile(csrPath, csrPem, "utf8"),
+    ]);
+
+    await execFileAsync("openssl", [
+      "x509",
+      "-req",
+      "-in", csrPath,
+      "-signkey", keyPath,
+      "-out", certPath,
+      "-days", String(validityDays),
+      "-sha256",
+    ]);
+
+    const certPem = await fs.readFile(certPath, "utf8");
+
+    return {
+      certPem,
+      commonName,
+      organization,
+      organizationalUnit,
+      country,
+      email,
+      validityDays,
+      isFallback: true,
+    };
+  } finally {
+    await Promise.allSettled([
+      fs.unlink(keyPath),
+      fs.unlink(csrPath),
+      fs.unlink(certPath),
+    ]);
+  }
+};
+
 module.exports = {
   generateCsr,
+  generateSelfSignedCert,
 };

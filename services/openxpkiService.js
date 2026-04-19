@@ -1,122 +1,70 @@
 const axios = require("axios");
 const https = require("https");
 
-const genericUrl = process.env.OPENXPKI_RPC_GENERIC_URL;
-const publicUrl = process.env.OPENXPKI_RPC_PUBLIC_URL;
+const genericBaseUrl = process.env.OPENXPKI_RPC_GENERIC_URL;
+const publicBaseUrl = process.env.OPENXPKI_RPC_PUBLIC_URL;
+const rpcTimeoutMs = parseInt(process.env.OPENXPKI_TIMEOUT_MS || "20000", 10);
 
-const httpsAgent = new https.Agent({
-  rejectUnauthorized: false,
-});
+const httpsAgent = new https.Agent({ rejectUnauthorized: false });
+
+const defaultHeaders = {
+  "Content-Type": "application/json",
+  Accept: "application/json",
+};
 
 const handleRpcResponse = (data) => {
-  if (!data) {
-    throw new Error("Empty response from OpenXPKI");
-  }
-
-  if (data.error) {
-    throw new Error(
-      `OpenXPKI error ${data.error.code}: ${data.error.message}`
-    );
-  }
-
-  if (!data.result) {
-    throw new Error("OpenXPKI response does not contain a result object");
-  }
-
+  if (!data) throw new Error("Empty response from OpenXPKI");
+  if (data.error) throw new Error(`OpenXPKI error ${data.error.code}: ${data.error.message}`);
+  if (!data.result) throw new Error("OpenXPKI response does not contain a result object");
   return data.result;
 };
 
-const requestCertificate = async ({ pkcs10, comment = "", profile = "" }) => {
-  const payload = {
-    pkcs10,
-  };
-
-  if (comment) payload.comment = comment;
-  if (profile) payload.profile = profile;
-
-  const response = await axios.post(
-    `${genericUrl}/RequestCertificate`,
-    payload,
-    {
-      httpsAgent,
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      timeout: 20000,
-    }
-  );
-
+const rpcPost = async (url, payload) => {
+  const response = await axios.post(url, payload, {
+    httpsAgent,
+    headers: defaultHeaders,
+    timeout: rpcTimeoutMs,
+  });
   return handleRpcResponse(response.data);
 };
 
-const searchCertificateOnce = async (payload, matchedBy) => {
-  const response = await axios.post(
-    `${publicUrl}/SearchCertificate`,
-    payload,
-    {
-      httpsAgent,
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      timeout: 20000,
-    }
-  );
-
-  const result = handleRpcResponse(response.data);
-  return {
-    ...result,
-    matchedBy,
-    searchPayload: payload,
-  };
+// Submit CSR to OpenXPKI
+const requestCertificate = async ({ pkcs10, comment = "", profile = "" }) => {
+  const payload = { pkcs10 };
+  if (comment) payload.comment = comment;
+  if (profile) payload.profile = profile;
+  return rpcPost(`${genericBaseUrl}/RequestCertificate`, payload);
 };
 
-const searchCertificate = async ({ commonName = "" }) => {
-  if (!commonName || !commonName.trim()) {
-    throw new Error("commonName is required for SearchCertificate");
+// Pick up result using transaction_id
+const pickupCertificate = async ({ transactionId, pkcs10 }) => {
+  if (!transactionId && !pkcs10) {
+    throw new Error("pickupCertificate requires transactionId or pkcs10");
   }
+  const payload = {};
+  if (transactionId) payload.transaction_id = transactionId;
+  if (pkcs10) payload.pkcs10 = pkcs10;
+  return rpcPost(`${genericBaseUrl}/RequestCertificate`, payload);
+};
 
-  const payload = {
-    common_name: commonName.trim(),
-  };
-
+// Search by common name — fallback only
+const searchCertificate = async ({ commonName = "" }) => {
+  if (!commonName.trim()) throw new Error("commonName is required for SearchCertificate");
   const response = await axios.post(
-    `${publicUrl}/SearchCertificate`,
-    payload,
-    {
-      httpsAgent,
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      timeout: 20000,
-    }
+    `${publicBaseUrl}/SearchCertificate`,
+    { common_name: commonName.trim() },
+    { httpsAgent, headers: defaultHeaders, timeout: rpcTimeoutMs }
   );
-
-  const result = handleRpcResponse(response.data);
-
-  return {
-    ...result,
-    matchedBy: "common_name",
-    searchPayload: payload,
-  };
+  return handleRpcResponse(response.data);
 };
 
 const testConnection = async () => {
-  const response = await axios.get(`${genericUrl}/TestConnection`, {
-    httpsAgent,
-    headers: {
-      Accept: "application/json",
-    },
-    timeout: 15000,
-  });
-
-  return handleRpcResponse(response.data);
+  return rpcPost(`${genericBaseUrl}/TestConnection`, {});
 };
 
 module.exports = {
   requestCertificate,
+  pickupCertificate,
   searchCertificate,
   testConnection,
 };

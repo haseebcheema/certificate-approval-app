@@ -1,26 +1,31 @@
 {
   "name": "certificate-approval-app",
   "version": "1.0.0",
-  "description": "",
+  "description": "OpenXPKI Certificate Management System with approval workflow",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
     "seed": "node seed/seedUsers.js"
   },
-  "keywords": [],
+  "keywords": [
+    "openxpki",
+    "certificate",
+    "pki",
+    "express"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
     "axios": "^1.13.6",
     "bcrypt": "^6.0.0",
-    "body-parser": "^2.2.2",
     "dotenv": "^17.3.1",
     "ejs": "^5.0.1",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
-    "mongoose": "^9.3.0"
+    "mongoose": "^9.3.0",
+    "node-forge": "^1.4.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

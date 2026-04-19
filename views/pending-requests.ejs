@@ -1,81 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pending Requests</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
+
 <body>
   <div class="page-shell pending-page-shell">
     <div class="card stack-lg">
+
       <div class="page-header">
         <h2 class="page-heading">Pending Requests</h2>
+        <a href="/failed" class="failed-link">View Failed Requests</a>
       </div>
 
-      <% if (requests.length === 0) { %>
-        <div class="message-box info-box empty">No pending requests found.</div>
-      <% } else { %>
-        <div class="table-wrap pending-table-wrap">
-          <table class="pending-table">
-            <thead>
-              <tr>
-                <th>Requester</th>
-                <th>Common Name</th>
-                <th>Organization</th>
-                <th>OU</th>
-                <th>Country</th>
-                <th>Email</th>
-                <th>Created At</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% requests.forEach(request => { %>
-                <tr class="table-top">
-                  <td><%= request.requesterUsername %></td>
-                  <td><%= request.commonName %></td>
-                  <td><%= request.organization %></td>
-                  <td><%= request.organizationalUnit %></td>
-                  <td><%= request.country %></td>
-                  <td><%= request.email %></td>
-                  <td>
-                    <%= request.createdAt ? new Date(request.createdAt).toLocaleString() : "N/A" %>
-                  </td>
-                  <td class="cell-center">
-                    <span class="badge <%= request.status.toLowerCase() %>">
-                      <%= request.status %>
-                    </span>
-                  </td>
-                  <td class="cell-start">
-                    <div class="action-stack">
-                      <a href="/pending/<%= request._id %>" class="details-btn">View Details</a>
-
-                      <form action="/approve/<%= request._id %>" method="POST" class="inline-form">
-                        <button type="submit" class="approve-btn">Approve</button>
-                      </form>
-
-                      <form action="/reject/<%= request._id %>" method="POST" class="inline-form reject-form">
-                        <button type="submit" class="reject-btn">Reject</button>
-                        <label for="rejection-reason-<%= request._id %>">Rejection reason:</label>
-                        <textarea
-                          id="rejection-reason-<%= request._id %>"
-                          name="rejectionReason"
-                          rows="2"
-                        ></textarea>
-                      </form>
-                    </div>
-                  </td>
+      <% if (requests.length===0) { %>
+        <div class="message-box info-box empty">No pending requests at the moment.</div>
+        <% } else { %>
+          <div class="table-wrap pending-table-wrap">
+            <table class="pending-table">
+              <thead>
+                <tr>
+                  <th>Requester</th>
+                  <th>Common Name</th>
+                  <th>Organization</th>
+                  <th>OU</th>
+                  <th>Country</th>
+                  <th>Email</th>
+                  <th>Submitted</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
-              <% }) %>
-            </tbody>
-          </table>
-        </div>
-      <% } %>
+              </thead>
+              <tbody>
+                <% requests.forEach(request=> { %>
+                  <tr class="table-top">
+                    <td>
+                      <%= request.requesterUsername %>
+                    </td>
+                    <td>
+                      <%= request.commonName %>
+                    </td>
+                    <td>
+                      <%= request.organization %>
+                    </td>
+                    <td>
+                      <%= request.organizationalUnit %>
+                    </td>
+                    <td>
+                      <%= request.country %>
+                    </td>
+                    <td>
+                      <%= request.email %>
+                    </td>
+                    <td>
+                      <%= request.createdAt ? new Date(request.createdAt).toLocaleString() : "N/A" %>
+                    </td>
 
-      <a href="/dashboard" class="back-link">Back to Dashboard</a>
+                    <td class="cell-center">
+                      <span class="badge <%= request.status.toLowerCase() %>">
+                        <%= request.status %>
+                      </span>
+                    </td>
+
+                    <td class="actions-cell">
+                      <%# View Details %>
+                        <a href="/pending/<%= request._id %>" class="details-btn action-row-btn">View Details</a>
+
+                        <%# Approve %>
+                          <form action="/approve/<%= request._id %>" method="POST">
+                            <button type="submit" class="approve-btn action-row-btn">Approve</button>
+                          </form>
+
+                          <%# Reject with compact inline textarea %>
+                            <form action="/reject/<%= request._id %>" method="POST" class="reject-inline-form">
+                              <textarea name="rejectionReason" class="reject-inline-textarea" rows="1"
+                                placeholder="Rejection reason"></textarea>
+                              <button type="submit" class="reject-btn action-row-btn">Reject</button>
+                            </form>
+                    </td>
+                  </tr>
+                  <% }) %>
+              </tbody>
+            </table>
+          </div>
+          <% } %>
+
+            <a href="/dashboard" class="back-link">Dashboard</a>
     </div>
   </div>
 </body>
+
 </html>

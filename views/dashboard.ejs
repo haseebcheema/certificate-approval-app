@@ -10,8 +10,8 @@
   <div class="page-shell medium">
     <div class="card stack-lg">
       <div class="page-header">
-        <h1 class="page-title"><%= user.username %></h1>
-        <div class="role">Role: <strong><%= user.role %></strong></div>
+        <h1 class="page-title"><%= user.username.charAt(0).toUpperCase() + user.username.slice(1) %></h1>
+        <div class="role">Role: <strong><%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %></strong></div>
       </div>
 
       <div class="menu">
@@ -24,12 +24,15 @@
         <% if (user.role === "approver") { %>
           <a href="/pending">Pending Requests</a>
           <a href="/approved">Approved Requests</a>
+          <a href="/failed">Failed Requests</a>
         <% } %>
       </div>
 
-      <form action="/logout" method="POST" class="inline-form">
-        <button type="submit" class="logout-btn">Logout</button>
-      </form>
+      <div style="margin-top: 24px;">
+        <form action="/logout" method="POST">
+          <button type="submit" class="logout-btn">Logout</button>
+        </form>
+      </div>
     </div>
   </div>
 </body>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Failed Requests</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="page-shell pending-page-shell">
+    <div class="card stack-lg">
+
+      <div class="page-header">
+        <h2 class="page-heading">Failed Requests</h2>
+        <a href="/pending" class="failed-link">View Pending Requests</a>
+      </div>
+
+      <div class="message-box warning-box">
+        These requests could not be completed. Ensure the certificate authority
+        is reachable before retrying.
+      </div>
+
+      <% if (requests.length === 0) { %>
+        <div class="message-box info-box empty">No failed requests</div>
+      <% } else { %>
+        <div class="table-wrap pending-table-wrap">
+          <table class="pending-table">
+            <thead>
+              <tr>
+                <th>Requester</th>
+                <th>Common Name</th>
+                <th>Organization</th>
+                <th>Last Updated</th>
+                <th>Retries</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% requests.forEach(request => { %>
+                <tr class="table-top failed-row">
+                  <td><%= request.requesterUsername %></td>
+                  <td><%= request.commonName %></td>
+                  <td><%= request.organization %></td>
+                  <td><%= request.updatedAt ? new Date(request.updatedAt).toLocaleString() : "N/A" %></td>
+
+                  <td class="cell-center">
+                    <% if (request.retryCount > 0) { %>
+                      <span class="badge failed"><%= request.retryCount %></span>
+                    <% } else { %>
+                      <span class="muted">0</span>
+                    <% } %>
+                  </td>
+
+                  <td class="actions-cell">
+                    <a href="/pending/<%= request._id %>" class="details-btn action-row-btn">View Details</a>
+                    <form action="/retry/<%= request._id %>" method="POST" class="reject-inline-form">
+                      <button type="submit" class="retry-btn action-row-btn">Retry</button>
+                    </form>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+
+      <a href="/dashboard" class="back-link">Dashboard</a>
+    </div>
+  </div>
+</body>
+</html>

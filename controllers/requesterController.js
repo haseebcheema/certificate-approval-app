@@ -1,16 +1,23 @@
 const CertificateRequest = require("../models/CertificateRequest");
 const { generateCsr } = require("../services/csrService");
 const Certificate = require("../models/Certificate");
-const { searchCertificate } = require("../services/openxpkiService");
+const {
+  pickupCertificate,
+  searchCertificate,
+} = require("../services/openxpkiService");
 
 const getRequestForm = (req, res) => {
-  res.render("request-form", {
-    error: null,
-    success: null,
-  });
+  res.render("request-form", { error: null, success: null });
 };
 
 const submitCertificateRequest = async (req, res) => {
+  const isJson = req.is("application/json");
+
+  const sendError = (message) => {
+    if (isJson) return res.status(400).json({ success: false, error: message });
+    return res.render("request-form", { error: message, success: null });
+  };
+
   try {
     const {
       commonName,
@@ -18,87 +25,99 @@ const submitCertificateRequest = async (req, res) => {
       organizationalUnit,
       country,
       email,
+      csrPem: clientCsrPem,
+      clientSideCsr,
     } = req.body;
 
-    if (
-      !commonName ||
-      !organization ||
-      !organizationalUnit ||
-      !country ||
-      !email
-    ) {
-      return res.render("request-form", {
-        error: "All fields are required",
-        success: null,
-      });
+    if (!commonName || !organization || !organizationalUnit || !country || !email) {
+      return sendError("All fields are required.");
     }
 
     if (country.trim().length !== 2) {
-      return res.render("request-form", {
-        error: "Country must be a 2-letter code, e.g. PK, DE, US",
-        success: null,
-      });
+      return sendError("Country must be a 2-letter code, e.g. US, DE, PK.");
     }
 
-    const normalizedCommonName = commonName.trim();
-    const normalizedOrganization = organization.trim();
+    const normalizedCN = commonName.trim();
+    const normalizedOrg = organization.trim();
     const normalizedOU = organizationalUnit.trim();
     const normalizedCountry = country.trim().toUpperCase();
     const normalizedEmail = email.trim().toLowerCase();
 
-    const existingRequest = await CertificateRequest.findOne({
-      commonName: normalizedCommonName,
+    const existingActive = await CertificateRequest.findOne({
+      commonName: normalizedCN,
+      status: { $in: ["PENDING", "APPROVED", "ISSUED", "FALLBACK_ISSUED"] },
     });
 
-    if (existingRequest) {
-      return res.render("request-form", {
-        error:
-          "A certificate request with this common name already exists.",
-        success: null,
-      });
+    if (existingActive) {
+      return sendError("A certificate for this common name is already active.");
     }
 
-    const { csrPem, privateKeyPem } = await generateCsr({
-      commonName: normalizedCommonName,
-      organization: normalizedOrganization,
-      organizationalUnit: normalizedOU,
-      country: normalizedCountry,
-      email: normalizedEmail,
-    });
+    const isClientSide =
+      clientSideCsr === "true" &&
+      clientCsrPem &&
+      clientCsrPem.trim().length > 0;
 
-    const newRequest = new CertificateRequest({
+    let csrPem = "";
+    let privateKeyPem = "";
+
+    if (isClientSide) {
+      const pem = clientCsrPem.trim();
+      if (
+        !pem.includes("-----BEGIN CERTIFICATE REQUEST-----") &&
+        !pem.includes("-----BEGIN NEW CERTIFICATE REQUEST-----")
+      ) {
+         return sendError("Key generation failed. Please refresh and try again.");
+      }
+      csrPem = pem;
+      privateKeyPem = "";
+    } else {
+      const generated = await generateCsr({
+        commonName: normalizedCN,
+        organization: normalizedOrg,
+        organizationalUnit: normalizedOU,
+        country: normalizedCountry,
+        email: normalizedEmail,
+      });
+      csrPem = generated.csrPem;
+      privateKeyPem = generated.privateKeyPem;
+    }
+
+    await new CertificateRequest({
       requesterId: req.session.user.id,
       requesterUsername: req.session.user.username,
-      commonName: normalizedCommonName,
-      organization: normalizedOrganization,
+      commonName: normalizedCN,
+      organization: normalizedOrg,
       organizationalUnit: normalizedOU,
       country: normalizedCountry,
       email: normalizedEmail,
       csrPem,
       privateKeyPem,
+      clientSideCsr: Boolean(isClientSide),
       status: "PENDING",
-    });
+    }).save();
 
-    await newRequest.save();
-
+    if (isJson) {
+      return res.json({
+        success: true,
+        message: "Request submitted. You will be notified once it is approved.",
+      });
+    }
     return res.render("request-form", {
-      error: null,
-      success: "Certificate request submitted successfully.",
+      error:   null,
+      success: "Request submitted. You will be notified once it is approved.",
     });
+
   } catch (error) {
-    console.error("Submit request error:", error.message);
-    return res.render("request-form", {
-      error: `Something went wrong while generating the CSR: ${error.message}`,
-      success: null,
-    });
+    console.error("[requesterController] submitCertificateRequest:", error.message);
+    return sendError("Something went wrong. Please try again.");
   }
 };
 
 const getMyRequests = async (req, res) => {
   try {
-    const requests = await CertificateRequest.find({
-      requesterId: req.session.user.id,
-    }).sort({ createdAt: -1 });
+    const requests = await CertificateRequest
+      .find({ requesterId: req.session.user.id })
+      .sort({ createdAt: -1 });
 
     res.render("my-requests", {
       requests,
@@ -107,12 +126,24 @@ const getMyRequests = async (req, res) => {
       issuanceError: "",
     });
   } catch (error) {
-    console.error("Get my requests error:", error.message);
+    console.error("[requesterController] getMyRequests:", error.message);
     res.status(500).send("Error fetching your requests");
   }
 };
 
 const checkMyRequestIssuance = async (req, res) => {
+  const renderMyRequests = async (issuanceMessage, issuanceMessageType, issuanceError) => {
+    const requests = await CertificateRequest
+      .find({ requesterId: req.session.user.id })
+      .sort({ createdAt: -1 });
+    return res.render("my-requests", {
+      requests,
+      issuanceMessage,
+      issuanceMessageType,
+      issuanceError,
+    });
+  };
+
   try {
     const { requestId } = req.params;
 
@@ -121,124 +152,148 @@ const checkMyRequestIssuance = async (req, res) => {
       requesterId: req.session.user.id,
     });
 
-    if (!request) {
-      return res.status(404).send("Request not found");
-    }
+    if (!request) return res.status(404).send("Request not found");
 
     if (request.status !== "APPROVED" && request.status !== "ISSUED") {
-      return res
-        .status(400)
-        .send("This request must be approved before its issuance status can be checked.");
+      return res.status(400).send("This request must be approved before its issuance status can be checked.");
     }
 
-    const searchResult = await searchCertificate({
-      commonName: request.commonName,
-    });
+    // Primary: pickup using transaction_id
+    if (request.openxpkiTransactionId) {
+      const pickupResult = await pickupCertificate({
+        transactionId: request.openxpkiTransactionId,
+      });
 
-    console.log("Requester side - OpenXPKI SearchCertificate response:");
-    console.dir(searchResult, { depth: null });
+      const state = (pickupResult?.state || "").toUpperCase();
+      const procState = (pickupResult?.proc_state || "").toLowerCase();
+      const certId = pickupResult?.data?.cert_identifier || "";
+      const certificatePem = pickupResult?.data?.certificate || "";
+      const errorCode = pickupResult?.data?.error_code || "";
 
+      // Rejected or failed
+      if (state === "FAILURE" || state === "REJECTED" ||
+          (procState === "finished" && errorCode)) {
+        request.status          = "REJECTED";
+        request.rejectionReason = errorCode || "Rejected by the certificate authority";
+        request.openxpkiError   = errorCode || "Request was rejected";
+        await request.save();
+
+        return renderMyRequests(
+          "",
+          "error",
+          "Your certificate request was declined by the certificate authority."
+        );
+      }
+
+      // Successfully issued
+      if (state === "SUCCESS" && certId) {
+        request.status = "ISSUED";
+        request.openxpkiError = "";
+        request.openxpkiCertIdentifier = certId;
+        await request.save();
+
+        if (certificatePem && certificatePem.trim()) {
+          const existingCert = await Certificate.findOne({ requestId: request._id });
+          if (!existingCert) {
+            await Certificate.create({
+              requestId: request._id,
+              requesterId: request.requesterId,
+              requesterUsername: request.requesterUsername,
+              commonName: request.commonName,
+              pemCertificate: certificatePem,
+              privateKey: request.privateKeyPem || "",
+              issuedAt: new Date(),
+            });
+          } else {
+            existingCert.pemCertificate = certificatePem;
+            existingCert.issuedAt = existingCert.issuedAt || new Date();
+            await existingCert.save();
+          }
+          return renderMyRequests(
+            "Certificate issued successfully and is ready to download.",
+            "success",
+            ""
+          );
+        }
+
+        return renderMyRequests(
+          "Certificate issued. Contact your administrator to retrieve it.",
+          "info",
+          ""
+        );
+      }
+
+      // Still pending
+      return renderMyRequests(
+        "Your request is being processed. Check back shortly.",
+        "info",
+        ""
+      );
+    }
+
+    // Fallback: search by common name
+    const searchResult = await searchCertificate({ commonName: request.commonName });
     const resultData = Array.isArray(searchResult?.data)
       ? searchResult.data[0] || {}
       : searchResult?.data || searchResult || {};
 
-    console.log("Normalized resultData:");
-    console.dir(resultData, { depth: null });
-
-    const certIdentifier = resultData?.cert_identifier || "";
     const certStatus = (resultData?.status || "").toUpperCase();
-    const certificatePem =
-      resultData?.certificate ||
-      resultData?.pem ||
-      resultData?.cert_pem ||
-      "";
+    const certificatePem = resultData?.certificate || resultData?.pem || resultData?.cert_pem || "";
+    const certIdentifier = resultData?.cert_identifier || "";
 
-    console.log("Extracted values:");
-    console.log({
-      certIdentifier,
-      certStatus,
-      hasCertificatePem: Boolean(certificatePem && certificatePem.trim()),
-      certificatePreview: certificatePem ? certificatePem.slice(0, 80) : "",
-    });
-
-    let issuanceMessage = "";
-    let issuanceMessageType = "";
-    let issuanceError = "";
-
-    const isIssued = certStatus === "ISSUED";
-    const hasDownloadableCertificate = Boolean(
-      certificatePem && certificatePem.trim()
-    );
-
-    if (!isIssued) {
-      issuanceMessage = "Certificate is not issued yet.";
-      issuanceMessageType = "info";
-    } else {
-      request.status = "ISSUED";
-      request.openxpkiError = "";
-
-      if (certIdentifier && !request.openxpkiCertIdentifier) {
-        request.openxpkiCertIdentifier = certIdentifier;
-      }
-
-      await request.save();
-
-      if (hasDownloadableCertificate) {
-        const existingCertificate = await Certificate.findOne({
-          requestId: request._id,
-        });
-
-        if (!existingCertificate) {
-          await Certificate.create({
-            requestId: request._id,
-            requesterId: request.requesterId,
-            requesterUsername: request.requesterUsername,
-            commonName: request.commonName,
-            pemCertificate: certificatePem,
-            privateKey: request.privateKeyPem || "",
-            issuedAt: new Date(),
-          });
-        } else {
-          existingCertificate.pemCertificate = certificatePem;
-          existingCertificate.privateKey =
-            request.privateKeyPem || existingCertificate.privateKey || "";
-          existingCertificate.issuedAt =
-            existingCertificate.issuedAt || new Date();
-          await existingCertificate.save();
-        }
-
-        issuanceMessage = "Certificate has been issued successfully.";
-        issuanceMessageType = "success";
-      } else {
-        issuanceMessage =
-          "Certificate is marked as issued in OpenXPKI, but the PEM certificate was not returned by SearchCertificate.";
-        issuanceMessageType = "info";
-      }
+    if (certStatus !== "ISSUED") {
+      return renderMyRequests(
+        "Your request is being processed. Check back shortly.",
+        "info",
+        ""
+      );
     }
 
-    const requests = await CertificateRequest.find({
-      requesterId: req.session.user.id,
-    }).sort({ createdAt: -1 });
+    request.status = "ISSUED";
+    request.openxpkiError = "";
+    if (certIdentifier) request.openxpkiCertIdentifier = certIdentifier;
+    await request.save();
 
-    return res.render("my-requests", {
-      requests,
-      issuanceMessage,
-      issuanceMessageType,
-      issuanceError,
-    });
+    if (certificatePem && certificatePem.trim()) {
+      const existingCert = await Certificate.findOne({ requestId: request._id });
+      if (!existingCert) {
+        await Certificate.create({
+          requestId: request._id,
+          requesterId: request.requesterId,
+          requesterUsername: request.requesterUsername,
+          commonName: request.commonName,
+          pemCertificate: certificatePem,
+          privateKey: request.privateKeyPem || "",
+          issuedAt: new Date(),
+        });
+      } else {
+        existingCert.pemCertificate = certificatePem;
+        existingCert.issuedAt = existingCert.issuedAt || new Date();
+        await existingCert.save();
+      }
+      return renderMyRequests(
+        "Certificate issued successfully and is ready to download.",
+        "success",
+        ""
+      );
+    }
+
+    return renderMyRequests(
+      "Certificate issued. Contact your administrator to retrieve it.",
+      "info",
+      ""
+    );
+
   } catch (error) {
-    console.error("Requester check issuance error:");
-    console.dir(error.response?.data || error.message, { depth: null });
-
-    const requests = await CertificateRequest.find({
-      requesterId: req.session.user.id,
-    }).sort({ createdAt: -1 });
-
+    console.error("[requesterController] checkMyRequestIssuance:", error.message);
+    const requests = await CertificateRequest
+      .find({ requesterId: req.session.user.id })
+      .sort({ createdAt: -1 });
     return res.render("my-requests", {
       requests,
       issuanceMessage: "",
       issuanceMessageType: "",
-      issuanceError: "Error checking certificate issuance.",
+      issuanceError: "Could not check status. Please try again.",
     });
   }
 };
